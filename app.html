@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JR Radio">
+    <meta name="theme-color" content="#0c1e3a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>JR Radio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0c1e3a;
+            --navy-light: #132d54;
+            --navy-mid: #1a3f6f;
+            --gold: #e8a832;
+            --gold-bright: #f5c542;
+            --gold-dim: #c48a20;
+            --teal: #3d7a8a;
+            --teal-light: #5aaabb;
+            --white: #f0f2f5;
+            --white-soft: #c8cdd5;
+            --red: #e53e3e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            color: var(--white);
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            position: relative;
+            overflow: hidden;
+        }
+        .app::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(232, 168, 50, 0.07) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(61, 122, 138, 0.06) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== TOP BANNER ===== */
+        .top-banner {
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(19, 45, 84, 0.95) 0%, rgba(12, 30, 58, 0.9) 100%);
+            border-bottom: 1px solid rgba(232, 168, 50, 0.15);
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+        .top-banner::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), var(--teal-light), var(--gold), transparent);
+            opacity: 0.5;
+        }
+        .banner-inner {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            gap: 0.75rem;
+        }
+        .banner-logo {
+            height: 46px; width: auto;
+            filter: drop-shadow(0 0 10px rgba(232, 168, 50, 0.2));
+            flex-shrink: 0;
+        }
+        .banner-info { flex: 1; min-width: 0; }
+        .banner-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem; letter-spacing: 2px; color: var(--gold); line-height: 1;
+        }
+        .banner-sub { font-size: 0.65rem; color: var(--white-soft); opacity: 0.7; margin-top: 1px; }
+        .banner-live {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            background: rgba(229,62,62,0.12); border: 1px solid rgba(229,62,62,0.25);
+            padding: 0.15rem 0.5rem; border-radius: 50px;
+            font-size: 0.55rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+            color: #fc8181; margin-top: 3px; opacity: 0; transition: opacity 0.3s;
+        }
+        .banner-live.on { opacity: 1; }
+        .banner-live .dot { width: 5px; height: 5px; background: var(--red); border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(229,62,62,0.7); }
+            50% { opacity:0.8; box-shadow:0 0 0 5px rgba(229,62,62,0); }
+        }
+        .banner-viz {
+            display: flex; align-items: flex-end; gap: 2px; height: 24px; flex-shrink: 0;
+        }
+        .banner-viz .bar {
+            width: 3px; background: var(--gold); border-radius: 1.5px;
+            opacity: 0.2; transition: opacity 0.3s;
+        }
+        .banner-viz.active .bar { opacity:1; animation-name:barBounce; animation-duration:1s; animation-timing-function:ease; animation-iteration-count:infinite; }
+        .banner-viz .bar:nth-child(1){height:30%;animation-delay:0s}
+        .banner-viz .bar:nth-child(2){height:55%;animation-delay:.12s}
+        .banner-viz .bar:nth-child(3){height:40%;animation-delay:.24s}
+        .banner-viz .bar:nth-child(4){height:75%;animation-delay:.08s}
+        .banner-viz .bar:nth-child(5){height:45%;animation-delay:.2s}
+        @keyframes barBounce { 0%,100%{transform:scaleY(.35)} 50%{transform:scaleY(1)} }
+
+        .banner-play {
+            width: 52px; height: 52px; background: var(--gold); border: none; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(232,168,50,0.3); position: relative;
+        }
+        .banner-play::before {
+            content:''; position:absolute; inset:-5px; border-radius:50%;
+            border:2px solid rgba(232,168,50,0.15); opacity:0; transition:opacity .3s;
+            animation:ringPulse 2s ease infinite;
+        }
+        .banner-play.playing::before { opacity:1; }
+        @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:.4} 50%{transform:scale(1.12);opacity:0} }
+        .banner-play:active { transform:scale(0.9); }
+        .banner-play svg { width:24px; height:24px; fill:var(--navy); }
+        .banner-play .bp-play { margin-left:3px; }
+        .banner-play .bp-pause { display:none; }
+        .banner-play.playing .bp-play { display:none; }
+        .banner-play.playing .bp-pause { display:block; }
+
+        .banner-socials {
+            display: flex; justify-content: center; gap: 2rem;
+            padding: 0.35rem 1rem; background: rgba(0,0,0,0.15);
+        }
+        .banner-socials a {
+            display:flex; align-items:center; gap:0.35rem;
+            color:var(--white-soft); text-decoration:none;
+            font-size:0.65rem; font-weight:600; letter-spacing:0.5px;
+            opacity:0.6; transition:all .3s;
+        }
+        .banner-socials a:hover { opacity:1; color:var(--gold); }
+        .banner-socials a svg { width:14px; height:14px; fill:currentColor; }
+
+        /* ===== SPONSOR CAROUSEL ===== */
+        .sponsor-area {
+            flex: 1; position: relative; z-index: 2;
+            display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+        }
+        .sponsor-carousel {
+            flex: 1; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 0; padding: 0.75rem;
+        }
+        .carousel-frame {
+            width: 100%; height: 100%; max-width: 520px;
+            position: relative; border-radius: 20px; overflow: hidden;
+            background: linear-gradient(145deg, rgba(19,45,84,0.6), rgba(26,63,111,0.4));
+            border: 1px solid rgba(255,255,255,0.06);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+        .carousel-slide {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0.75rem; opacity: 0; transform: scale(0.92);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+            cursor: pointer;
+        }
+        .carousel-slide.active { opacity: 1; transform: scale(1); }
+        .carousel-slide img {
+            max-width: 100%; max-height: 100%; object-fit: contain;
+            border-radius: 12px; filter: drop-shadow(0 4px 15px rgba(0,0,0,0.3));
+        }
+        .carousel-slide::after {
+            content:'Toca para ampliar'; position:absolute;
+            bottom:.6rem; left:50%; transform:translateX(-50%);
+            background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+            color:var(--white-soft); font-size:0.6rem; font-weight:600;
+            letter-spacing:1px; text-transform:uppercase;
+            padding:0.25rem 0.75rem; border-radius:50px;
+            opacity:0; transition:opacity .3s; pointer-events:none;
+        }
+        .carousel-slide.active.show-hint::after { opacity:1; }
+
+        .carousel-progress {
+            flex-shrink: 0; display: flex; align-items: center; gap: 4px;
+            padding: 0.5rem 1rem; justify-content: center; flex-wrap: wrap;
+        }
+        .cprog-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: rgba(255,255,255,0.12); transition: all 0.4s;
+        }
+        .cprog-dot.active { background: var(--gold); width: 20px; border-radius: 3px; }
+
+        .carousel-timer {
+            position: absolute; top: 0; left: 0; height: 3px;
+            background: var(--gold); border-radius: 0 0 2px 0;
+            z-index: 5; transition: width 0.1s linear; opacity: 0.7;
+        }
+
+        /* ===== FULLSCREEN MODAL ===== */
+        .sponsor-modal {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            flex-direction: column; align-items: center; justify-content: center; padding: 1rem;
+            padding-top: max(1rem, env(safe-area-inset-top,1rem));
+            padding-bottom: max(1rem, env(safe-area-inset-bottom,1rem));
+        }
+        .sponsor-modal.open { display: flex; }
+        .modal-img-wrap {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            width: 100%; min-height: 0; padding: 0.5rem;
+        }
+        .modal-img-wrap img {
+            max-width: 100%; max-height: 100%; object-fit: contain;
+            border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalIn 0.35s ease;
+        }
+        @keyframes modalIn { from{opacity:0;transform:scale(0.88)} to{opacity:1;transform:scale(1)} }
+        .modal-close {
+            position: absolute; top: max(1rem, env(safe-area-inset-top,1rem)); right: 1rem;
+            width: 40px; height: 40px; background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 50%;
+            color: white; font-size: 1.4rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s; z-index: 10;
+        }
+        .modal-close:hover,.modal-close:active { background:var(--gold); color:var(--navy); }
+        .modal-nav {
+            display: flex; gap: 1rem; padding: 0.75rem 0 0.25rem; flex-shrink: 0;
+        }
+        .modal-nav button {
+            width: 44px; height: 44px; background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 50%;
+            color: white; font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+        }
+        .modal-nav button:hover,.modal-nav button:active { background:rgba(232,168,50,0.2); border-color:var(--gold); }
+        .modal-nav button svg { width:20px; height:20px; stroke:white; fill:none; stroke-width:2.5; stroke-linecap:round; }
+        .modal-counter {
+            color:var(--white-soft); font-size:0.75rem; font-weight:600;
+            display:flex; align-items:center; opacity:0.5; letter-spacing:1px;
+        }
+
+        /* ===== NEWS TICKER ===== */
+        .ticker-zone {
+            flex-shrink: 0; position: relative; z-index: 10;
+            background: linear-gradient(180deg, rgba(12,30,58,0.95), rgba(19,45,84,0.98));
+            border-top: 1px solid rgba(232,168,50,0.12);
+            overflow: hidden; height: 40px; display: flex; align-items: center;
+        }
+        .ticker-label {
+            flex-shrink: 0; background: var(--gold); color: var(--navy);
+            padding: 0 0.65rem; height: 100%; display: flex; align-items: center;
+            font-size: 0.6rem; font-weight: 800; letter-spacing: 1.5px;
+            text-transform: uppercase; z-index: 1; position: relative;
+        }
+        .ticker-label::after {
+            content:''; position:absolute; right:-8px; top:0; bottom:0;
+            width:8px; background:linear-gradient(90deg, var(--gold), transparent);
+        }
+        .ticker-wrap {
+            flex: 1; overflow: hidden; height: 100%; display: flex; align-items: center;
+            mask-image:linear-gradient(90deg,transparent 0%,black 4%,black 96%,transparent 100%);
+            -webkit-mask-image:linear-gradient(90deg,transparent 0%,black 4%,black 96%,transparent 100%);
+        }
+        .ticker-track {
+            display: flex; align-items: center; gap: 2.5rem; white-space: nowrap;
+            animation: tickerScroll var(--ticker-speed,60s) linear infinite; width: max-content;
+        }
+        .ticker-item { font-size:0.75rem; font-weight:500; color:var(--white); display:flex; align-items:center; gap:0.4rem; }
+        .ticker-src { color:var(--gold); font-weight:700; font-size:0.65rem; }
+        .ticker-sep { color:var(--gold); opacity:0.3; }
+        @keyframes tickerScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+        .site-link {
+            flex-shrink: 0; text-align: center; padding: 0.3rem;
+            background: rgba(0,0,0,0.2); position: relative; z-index: 10;
+            padding-bottom: max(0.3rem, env(safe-area-inset-bottom,0.3rem));
+        }
+        .site-link a { color:var(--white-soft); font-size:0.6rem; text-decoration:none; opacity:0.35; letter-spacing:0.5px; }
+
+        /* === WEATHER MINI (APP) === */
+        .app-weather {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.4rem 1rem;
+            background: rgba(0,0,0,0.15);
+            position: relative;
+            z-index: 10;
+        }
+        .aw-icon { font-size: 1.3rem; line-height: 1; }
+        .aw-temp { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--gold); line-height: 1; }
+        .aw-desc { font-size: 0.7rem; color: var(--white-soft); opacity: 0.7; }
+        .aw-loc { font-size: 0.6rem; color: var(--white-soft); opacity: 0.4; }
+        .aw-forecast {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+        .aw-fday { text-align: center; }
+        .aw-fday .afd-label { font-size: 0.5rem; font-weight: 700; color: var(--white-soft); opacity: 0.5; letter-spacing: 0.5px; }
+        .aw-fday .afd-icon { font-size: 0.9rem; }
+        .aw-fday .afd-temps { font-size: 0.55rem; font-weight: 600; }
+        .aw-fday .afd-hi { color: var(--gold); }
+        .aw-fday .afd-lo { color: var(--white-soft); opacity: 0.4; }
+
+        /* === STATION STATUS (APP) === */
+        .app-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.3rem 1rem;
+            position: relative;
+            z-index: 10;
+        }
+        .as-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.6rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+        }
+        .as-badge .as-dot { width: 6px; height: 6px; border-radius: 50%; background: #48bb78; box-shadow: 0 0 6px rgba(72,187,120,0.5); }
+        .as-badge.offline .as-dot { background: #e53e3e; box-shadow: 0 0 6px rgba(229,62,62,0.5); }
+        .as-badge .as-text { color: #48bb78; }
+        .as-badge.offline .as-text { color: #fc8181; }
+        .as-np {
+            font-size: 0.7rem; color: var(--white-soft);
+            display: flex; align-items: center; gap: 0.3rem;
+            max-width: 220px; overflow: hidden;
+        }
+        .as-np .as-np-label { color: var(--gold); font-weight: 700; font-size: 0.6rem; flex-shrink: 0; }
+        .as-np .as-np-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .install-banner {
+            display:none; position:fixed; bottom:0; left:0; right:0;
+            background:var(--gold); color:var(--navy); padding:0.75rem 1rem;
+            text-align:center; font-weight:700; font-size:0.85rem; z-index:100; cursor:pointer;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom,0.75rem));
+        }
+        .install-banner.show { display:block; }
+
+        @media (orientation:landscape) and (max-height:500px) {
+            .banner-inner { padding:0.35rem 1rem; }
+            .banner-logo { height:32px; }
+            .banner-play { width:40px; height:40px; }
+            .banner-play svg { width:18px; height:18px; }
+            .banner-socials { padding:0.2rem; }
+            .carousel-progress { padding:0.25rem; }
+            .ticker-zone { height:32px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- TOP BANNER -->
+    <div class="top-banner">
+        <div class="banner-inner">
+            <img src="img/logo.jpeg" alt="JR Radio" class="banner-logo">
+            <div class="banner-info">
+                <div class="banner-title">JR RADIO</div>
+                <div class="banner-sub">Tu Radio Online</div>
+                <div class="banner-live" id="liveBadge"><span class="dot"></span> EN VIVO</div>
+            </div>
+            <div class="banner-viz" id="viz">
+                <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            </div>
+            <button class="banner-play" id="playBtn" aria-label="Reproducir">
+                <svg class="bp-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg class="bp-pause" viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+            </button>
+        </div>
+        <div class="banner-socials">
+            <a href="https://www.facebook.com/share/18MsKuTt9a/" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Facebook
+            </a>
+            <a href="https://www.instagram.com/alvarezaguirrejuanramon?igsh=MTJmZ3FkeDVkcm44aQ==" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                Instagram
+            </a>
+            <a href="https://www.tiktok.com/@jr.radio6?_r=1&_t=ZT-9457zahNqne" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                TikTok
+            </a>
+        </div>
+    </div>
+
+    <!-- SPONSOR CAROUSEL -->
+    <div class="sponsor-area">
+        <div class="sponsor-carousel">
+            <div class="carousel-frame" id="carouselFrame">
+                <div class="carousel-timer" id="carouselTimer"></div>
+            </div>
+        </div>
+        <div class="carousel-progress" id="carouselDots"></div>
+    </div>
+
+    <!-- STATION STATUS -->
+    <div class="app-status" id="appStatus">
+        <div class="as-badge" id="asBadge">
+            <span class="as-dot"></span><span class="as-text">Conectando...</span>
+        </div>
+        <div class="as-np" id="asNowPlaying" style="display:none;">
+            <span class="as-np-label">♪</span><span class="as-np-title" id="asNpTitle"></span>
+        </div>
+    </div>
+
+    <!-- WEATHER -->
+    <div class="app-weather" id="appWeather">
+        <span class="aw-desc" style="opacity:0.4;">🌤️ Cargando clima...</span>
+    </div>
+
+    <!-- NEWS TICKER -->
+    <div class="ticker-zone">
+        <div class="ticker-label">NOTICIAS</div>
+        <div class="ticker-wrap">
+            <div class="ticker-track" id="tickerTrack">
+                <span class="ticker-item" style="color:var(--white-soft);opacity:0.5;">Cargando noticias...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="site-link"><a href="index.html">Visitar sitio web completo &rarr;</a></div>
+</div>
+
+<!-- FULLSCREEN MODAL -->
+<div class="sponsor-modal" id="sponsorModal">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <div class="modal-img-wrap">
+        <img src="" alt="Patrocinador" id="modalImg">
+    </div>
+    <div class="modal-nav">
+        <button id="modalPrev" aria-label="Anterior"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="modal-counter" id="modalCounter">1 / 22</span>
+        <button id="modalNext" aria-label="Siguiente"><svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg></button>
+    </div>
+</div>
+
+<div class="install-banner" id="installBanner">📲 Instalar JR Radio en tu teléfono</div>
+
+<audio id="radioStream" preload="none"></audio>
+
+<script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+    // === AUDIO ===
+    const audio = document.getElementById('radioStream');
+    const playBtn = document.getElementById('playBtn');
+    const viz = document.getElementById('viz');
+    const liveBadge = document.getElementById('liveBadge');
+    let isPlaying = false;
+
+    function togglePlay() {
+        if (isPlaying) { audio.pause(); audio.src = ''; }
+        else { audio.src = 'https://radio.jrradiodmv.com/public/jr_radio'; audio.load(); audio.play().catch(()=>{}); }
+    }
+    audio.addEventListener('playing', () => {
+        isPlaying = true;
+        playBtn.classList.add('playing'); viz.classList.add('active'); liveBadge.classList.add('on');
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title:'JR Radio - En Vivo', artist:'Tu Radio Online', album:'JR Radio',
+                artwork:[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]
+            });
+            navigator.mediaSession.setActionHandler('play', togglePlay);
+            navigator.mediaSession.setActionHandler('pause', togglePlay);
+        }
+    });
+    audio.addEventListener('pause', () => {
+        isPlaying = false;
+        playBtn.classList.remove('playing'); viz.classList.remove('active'); liveBadge.classList.remove('on');
+    });
+    playBtn.addEventListener('click', togglePlay);
+    audio.volume = 0.8;
+
+    // === CAROUSEL ===
+    const SC = 22, DUR = 7000;
+    const frame = document.getElementById('carouselFrame');
+    const dotsW = document.getElementById('carouselDots');
+    const timer = document.getElementById('carouselTimer');
+    let cur = 0, sTimer = null;
+
+    let sH='', dH='';
+    for(let i=1;i<=SC;i++){
+        sH+=`<div class="carousel-slide ${i===1?'active show-hint':''}" data-i="${i-1}"><img src="img/patrocinadores/sponsor-${i}.jpg" alt="Patrocinador ${i}" loading="lazy"></div>`;
+        dH+=`<div class="cprog-dot ${i===1?'active':''}"></div>`;
+    }
+    frame.insertAdjacentHTML('beforeend', sH);
+    dotsW.innerHTML = dH;
+
+    const sl = frame.querySelectorAll('.carousel-slide');
+    const dt = dotsW.querySelectorAll('.cprog-dot');
+
+    setTimeout(()=>{ const h=frame.querySelector('.show-hint'); if(h)h.classList.remove('show-hint'); }, 3000);
+
+    function go(idx){
+        sl[cur].classList.remove('active'); dt[cur].classList.remove('active');
+        cur=((idx%SC)+SC)%SC;
+        sl[cur].classList.add('active'); dt[cur].classList.add('active');
+        resetT();
+    }
+    function resetT(){
+        timer.style.transition='none'; timer.style.width='0%';
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            timer.style.transition=`width ${DUR}ms linear`; timer.style.width='100%';
+        }));
+        clearTimeout(sTimer); sTimer=setTimeout(()=>go(cur+1), DUR);
+    }
+    resetT();
+
+    let tx=0;
+    frame.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+    frame.addEventListener('touchend',e=>{const d=tx-e.changedTouches[0].clientX;if(Math.abs(d)>40)go(d>0?cur+1:cur-1);},{passive:true});
+
+    // === MODAL ===
+    const modal=document.getElementById('sponsorModal'), mImg=document.getElementById('modalImg');
+    const mClose=document.getElementById('modalClose'), mPrev=document.getElementById('modalPrev');
+    const mNext=document.getElementById('modalNext'), mCount=document.getElementById('modalCounter');
+    let mi=0;
+
+    function openM(i){ mi=i; updM(); modal.classList.add('open'); document.body.style.overflow='hidden'; }
+    function closeM(){ modal.classList.remove('open'); document.body.style.overflow=''; }
+    function updM(){ mImg.src=`img/patrocinadores/sponsor-${mi+1}.jpg`; mCount.textContent=`${mi+1} / ${SC}`; }
+
+    sl.forEach((s,i)=>s.addEventListener('click',()=>{ if(s.classList.contains('active'))openM(i); }));
+    mClose.addEventListener('click',e=>{e.stopPropagation();closeM();});
+    modal.addEventListener('click',e=>{if(e.target===modal)closeM();});
+    mPrev.addEventListener('click',e=>{e.stopPropagation();mi=(mi-1+SC)%SC;updM();});
+    mNext.addEventListener('click',e=>{e.stopPropagation();mi=(mi+1)%SC;updM();});
+    document.addEventListener('keydown',e=>{
+        if(!modal.classList.contains('open'))return;
+        if(e.key==='Escape')closeM();
+        if(e.key==='ArrowLeft'){mi=(mi-1+SC)%SC;updM();}
+        if(e.key==='ArrowRight'){mi=(mi+1)%SC;updM();}
+    });
+    let mt=0;
+    modal.addEventListener('touchstart',e=>mt=e.touches[0].clientX,{passive:true});
+    modal.addEventListener('touchend',e=>{const d=mt-e.changedTouches[0].clientX;if(Math.abs(d)>50){mi=d>0?(mi+1)%SC:(mi-1+SC)%SC;updM();}},{passive:true});
+
+    // === TICKER ===
+    const RSS='https://api.rss2json.com/v1/api.json?rss_url=';
+    const tTrack=document.getElementById('tickerTrack');
+    const fds=[
+        {url:'https://eltiempolatino.com/feed/',src:'DC',fb:'https://news.google.com/rss/search?q=latinos+washington+dc&hl=es-419&gl=US&ceid=US:es-419'},
+        {url:'https://www.laprensagrafica.com/rss',src:'SV',fb:'https://news.google.com/rss/search?q=el+salvador+noticias&hl=es-419&gl=SV&ceid=SV:es-419'},
+        {url:'https://www.espn.com.mx/espn/rss/news',src:'DEPORTES',fb:'https://news.google.com/rss/search?q=futbol+la+liga+premier+league&hl=es-419&gl=US&ceid=US:es-419'}
+    ];
+    async function gF(f){
+        try{let r=await fetch(RSS+encodeURIComponent(f.url));let d=await r.json();
+            if(d.status==='ok'&&d.items?.length>0)return d.items.slice(0,5).map(i=>({t:i.title,s:f.src}));throw 0;
+        }catch(e){try{let r=await fetch(RSS+encodeURIComponent(f.fb));let d=await r.json();
+            if(d.status==='ok'&&d.items)return d.items.slice(0,4).map(i=>({t:i.title,s:f.src}));}catch(e2){}}
+        return[];
+    }
+    async function loadT(){
+        const res=await Promise.all(fds.map(f=>gF(f)));
+        const items=res.flat();
+        if(!items.length){tTrack.innerHTML='<span class="ticker-item" style="opacity:.4">Noticias no disponibles</span>';return;}
+        for(let i=items.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[items[i],items[j]]=[items[j],items[i]];}
+        const h=items.map(i=>`<span class="ticker-item"><span class="ticker-src">${i.s}</span> ${i.t} <span class="ticker-sep">◆</span></span>`).join('');
+        tTrack.innerHTML=h+h;
+        tTrack.style.setProperty('--ticker-speed',Math.max(45,tTrack.scrollWidth/2/55)+'s');
+    }
+    loadT(); setInterval(loadT,600000);
+
+    // === INSTALL ===
+    let dp;const ib=document.getElementById('installBanner');
+    window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;ib.classList.add('show');});
+    ib.addEventListener('click',async()=>{if(dp){dp.prompt();await dp.userChoice;dp=null;ib.classList.remove('show');}});
+
+    // === STATION STATUS ===
+    const SAPI='https://radio.jrradiodmv.com/api/nowplaying/jr_radio';
+    const asBadge=document.getElementById('asBadge');
+    const asNP=document.getElementById('asNowPlaying');
+    const asTitle=document.getElementById('asNpTitle');
+
+    async function checkStatus(){
+        try{
+            const r=await fetch(SAPI);
+            const d=await r.json();
+            if(d.is_online!==false){
+                asBadge.classList.remove('offline');
+                let h='<span class="as-dot"></span><span class="as-text">Al Aire</span>';
+                if(d.listeners?.current>0) h+=` <span style="color:var(--white-soft);opacity:0.5;font-size:0.55rem;margin-left:0.2rem;">👥 ${d.listeners.current}</span>`;
+                asBadge.innerHTML=h;
+            } else {
+                asBadge.classList.add('offline');
+                asBadge.innerHTML='<span class="as-dot"></span><span class="as-text">Fuera de Línea</span>';
+            }
+            const track=d.now_playing?.song?.title||d.now_playing?.song?.text;
+            if(track){asTitle.textContent=track;asNP.style.display='flex';}
+            else{asNP.style.display='none';}
+        }catch(e){asBadge.innerHTML='<span class="as-dot"></span><span class="as-text">Verificando...</span>';}
+    }
+    checkStatus(); setInterval(checkStatus,30000);
+
+    // === WEATHER ===
+    const appW=document.getElementById('appWeather');
+    const wIcons={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',85:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'};
+    const wDesc={0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Niebla',51:'Llovizna',61:'Lluvia leve',63:'Lluvia',65:'Lluvia intensa',71:'Nieve leve',73:'Nieve',75:'Nieve intensa',80:'Chubascos',82:'Chubascos fuertes',95:'Tormenta'};
+    const dNames=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+    async function loadAppWeather(lat,lon,city){
+        try{
+            const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=4`);
+            const d=await r.json();
+            const c=d.current, dy=d.daily;
+            let fc='';
+            for(let i=1;i<4;i++){
+                const dt=new Date(dy.time[i]+'T12:00:00');
+                fc+=`<div class="aw-fday"><div class="afd-label">${dNames[dt.getDay()]}</div><div class="afd-icon">${wIcons[dy.weather_code[i]]||'🌡️'}</div><div class="afd-temps"><span class="afd-hi">${Math.round(dy.temperature_2m_max[i])}°</span> <span class="afd-lo">${Math.round(dy.temperature_2m_min[i])}°</span></div></div>`;
+            }
+            appW.innerHTML=`
+                <span class="aw-icon">${wIcons[c.weather_code]||'🌡️'}</span>
+                <span class="aw-temp">${Math.round(c.temperature_2m)}°F</span>
+                <span class="aw-desc">${wDesc[c.weather_code]||''}</span>
+                <span class="aw-loc">📍 ${city}</span>
+                <div class="aw-forecast">${fc}</div>`;
+        }catch(e){appW.innerHTML='<span class="aw-desc" style="opacity:0.4">Clima no disponible</span>';}
+    }
+
+    if('geolocation' in navigator){
+        navigator.geolocation.getCurrentPosition(async(pos)=>{
+            const lat=pos.coords.latitude,lon=pos.coords.longitude;
+            let city='Tu ubicación';
+            try{const g=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`);
+            const gd=await g.json();city=gd.address?.city||gd.address?.town||gd.address?.village||gd.address?.county||'Tu ubicación';}catch(e){}
+            loadAppWeather(lat,lon,city);
+        },()=>loadAppWeather(38.9072,-77.0369,'Washington, DC'),{timeout:8000});
+    }else{loadAppWeather(38.9072,-77.0369,'Washington, DC');}
+</script>
+</body>
+</html>
