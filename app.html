@@ -468,9 +468,15 @@
     let isPlaying = false;
 
     function togglePlay() {
-        if (isPlaying) { audio.pause(); audio.src = ''; }
-        else { audio.src = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3'; audio.load(); audio.play().catch(()=>{}); }
+        if (isPlaying) { audio.pause(); audio.removeAttribute('src'); audio.load(); }
+        else {
+            audio.src = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3';
+            audio.load();
+            var p = audio.play();
+            if (p !== undefined) p.catch(function(e){ console.error('Play error:', e); });
+        }
     }
+    audio.addEventListener('error', function(){ console.error('Audio error:', audio.error?.code, audio.error?.message); });
     audio.addEventListener('playing', () => {
         isPlaying = true;
         playBtn.classList.add('playing'); viz.classList.add('active'); liveBadge.classList.add('on');

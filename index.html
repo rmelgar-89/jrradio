@@ -1157,9 +1157,7 @@
             </div>
         </div>
     </div>
-    <audio id="radioStream" preload="none">
-        <source src="https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="radioStream" preload="none"></audio>
     <!-- Weather Widget -->
     <div class="weather-widget" id="weatherWidget">
         <div class="weather-loading">🌤️ Cargando clima...</div>
@@ -1626,13 +1624,24 @@
     function togglePlay() {
         if (isPlaying) {
             audio.pause();
-            audio.src = '';
+            audio.removeAttribute('src');
+            audio.load();
         } else {
             audio.src = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3';
             audio.load();
-            audio.play().catch(e => console.log('Playback error:', e));
+            const p = audio.play();
+            if (p !== undefined) {
+                p.catch(e => {
+                    console.error('Playback error:', e);
+                    alert('Error al reproducir: ' + e.message);
+                });
+            }
         }
     }
+
+    audio.addEventListener('error', (e) => {
+        console.error('Audio error:', audio.error?.code, audio.error?.message);
+    });
 
     audio.addEventListener('playing', () => {
         isPlaying = true;
