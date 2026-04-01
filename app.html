@@ -469,7 +469,7 @@
 
     function togglePlay() {
         if (isPlaying) { audio.pause(); audio.src = ''; }
-        else { audio.src = 'https://radio.jrradiodmv.com/public/jr_radio'; audio.load(); audio.play().catch(()=>{}); }
+        else { audio.src = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3'; audio.load(); audio.play().catch(()=>{}); }
     }
     audio.addEventListener('playing', () => {
         isPlaying = true;
@@ -594,7 +594,10 @@
     async function checkStatus(){
         try{
             const r=await fetch(SAPI);
-            const d=await r.json();
+            const buf=await r.arrayBuffer();
+            let txt=new TextDecoder('utf-8').decode(buf);
+            if(txt.includes('\uFFFD')) txt=new TextDecoder('iso-8859-1').decode(buf);
+            const d=JSON.parse(txt);
             if(d.is_online!==false){
                 asBadge.classList.remove('offline');
                 let h='<span class="as-dot"></span><span class="as-text">Al Aire</span>';

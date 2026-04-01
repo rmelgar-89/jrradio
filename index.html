@@ -1158,7 +1158,7 @@
         </div>
     </div>
     <audio id="radioStream" preload="none">
-        <source src="https://radio.jrradiodmv.com/public/jr_radio" type="audio/mpeg">
+        <source src="https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3" type="audio/mpeg">
     </audio>
     <!-- Weather Widget -->
     <div class="weather-widget" id="weatherWidget">
@@ -1628,7 +1628,7 @@
             audio.pause();
             audio.src = '';
         } else {
-            audio.src = 'https://radio.jrradiodmv.com/public/jr_radio';
+            audio.src = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3';
             audio.load();
             audio.play().catch(e => console.log('Playback error:', e));
         }
@@ -1864,7 +1864,13 @@
     async function checkStationStatus() {
         try {
             const res = await fetch(STATION_API);
-            const data = await res.json();
+            const buf = await res.arrayBuffer();
+            // Try UTF-8 first, fall back to Latin-1 for music metadata
+            let text = new TextDecoder('utf-8').decode(buf);
+            if (text.includes('\uFFFD')) {
+                text = new TextDecoder('iso-8859-1').decode(buf);
+            }
+            const data = JSON.parse(text);
 
             if (data.is_online !== false) {
                 statusBadge.classList.remove('offline');
