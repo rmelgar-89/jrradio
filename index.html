@@ -1610,7 +1610,8 @@
 
 <script>
     // === AUDIO PLAYER ===
-    const audio = document.getElementById('radioStream');
+    const STREAM_URL = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3';
+    let audio = null;
     const mainPlayBtn = document.getElementById('mainPlayBtn');
     const playIcon = document.getElementById('playIcon');
     const pauseIcon = document.getElementById('pauseIcon');
@@ -1620,28 +1621,29 @@
     const volumeSlider = document.getElementById('volumeSlider');
 
     let isPlaying = false;
+    let currentVolume = 0.8;
 
     function togglePlay() {
-        if (isPlaying) {
+        if (isPlaying && audio) {
             audio.pause();
-            audio.removeAttribute('src');
-            audio.load();
+            audio = null;
+            isPlaying = false;
+            updateUI();
         } else {
-            audio.src = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3';
-            audio.load();
-            const p = audio.play();
-            if (p !== undefined) {
-                p.catch(e => {
-                    console.error('Playback error:', e);
-                    alert('Error al reproducir: ' + e.message);
-                });
-            }
+            // Create a fresh Audio object each time to avoid stale connections
+            if (audio) { audio.pause(); audio = null; }
+            audio = new Audio(STREAM_URL + '?nocache=' + Date.now());
+            audio.volume = currentVolume;
+            audio.addEventListener('playing', function() { isPlaying = true; updateUI(); });
+            audio.addEventListener('pause', function() { isPlaying = false; updateUI(); });
+            audio.addEventListener('error', function() {
+                console.error('Audio error:', audio.error?.code, audio.error?.message);
+                isPlaying = false;
+                updateUI();
+            });
+            audio.play().catch(function(e) { console.error('Play failed:', e); });
         }
     }
-
-    audio.addEventListener('error', (e) => {
-        console.error('Audio error:', audio.error?.code, audio.error?.message);
-    });
 
     audio.addEventListener('playing', () => {
         isPlaying = true;
@@ -1670,9 +1672,9 @@
     stickyPlayBtn.addEventListener('click', togglePlay);
 
     volumeSlider.addEventListener('input', (e) => {
-        audio.volume = e.target.value / 100;
+        currentVolume = e.target.value / 100;
+        if (audio) audio.volume = currentVolume;
     });
-    audio.volume = 0.8;
 
     // === STICKY PLAYER VISIBILITY ===
     const playerSection = document.getElementById('player');
@@ -1874,11 +1876,8 @@
         try {
             const res = await fetch(STATION_API);
             const buf = await res.arrayBuffer();
-            // Try UTF-8 first, fall back to Latin-1 for music metadata
-            let text = new TextDecoder('utf-8').decode(buf);
-            if (text.includes('\uFFFD')) {
-                text = new TextDecoder('iso-8859-1').decode(buf);
-            }
+            // Music metadata from Icecast is typically Latin-1 encoded
+            const text = new TextDecoder('iso-8859-1').decode(buf);
             const data = JSON.parse(text);
 
             if (data.is_online !== false) {

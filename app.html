@@ -461,40 +461,44 @@
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
     // === AUDIO ===
-    const audio = document.getElementById('radioStream');
+    const STREAM_URL = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3';
+    let audio = null;
     const playBtn = document.getElementById('playBtn');
     const viz = document.getElementById('viz');
     const liveBadge = document.getElementById('liveBadge');
     let isPlaying = false;
 
-    function togglePlay() {
-        if (isPlaying) { audio.pause(); audio.removeAttribute('src'); audio.load(); }
-        else {
-            audio.src = 'https://radio.jrradiodmv.com/listen/jr_radio/radio.mp3';
-            audio.load();
-            var p = audio.play();
-            if (p !== undefined) p.catch(function(e){ console.error('Play error:', e); });
+    function setPlaying(val) {
+        isPlaying = val;
+        if (val) {
+            playBtn.classList.add('playing'); viz.classList.add('active'); liveBadge.classList.add('on');
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title:'JR Radio - En Vivo', artist:'Tu Radio Online', album:'JR Radio',
+                    artwork:[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]
+                });
+                navigator.mediaSession.setActionHandler('play', togglePlay);
+                navigator.mediaSession.setActionHandler('pause', togglePlay);
+            }
+        } else {
+            playBtn.classList.remove('playing'); viz.classList.remove('active'); liveBadge.classList.remove('on');
         }
     }
-    audio.addEventListener('error', function(){ console.error('Audio error:', audio.error?.code, audio.error?.message); });
-    audio.addEventListener('playing', () => {
-        isPlaying = true;
-        playBtn.classList.add('playing'); viz.classList.add('active'); liveBadge.classList.add('on');
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title:'JR Radio - En Vivo', artist:'Tu Radio Online', album:'JR Radio',
-                artwork:[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png'},{src:'icons/icon-512.png',sizes:'512x512',type:'image/png'}]
-            });
-            navigator.mediaSession.setActionHandler('play', togglePlay);
-            navigator.mediaSession.setActionHandler('pause', togglePlay);
+
+    function togglePlay() {
+        if (isPlaying && audio) {
+            audio.pause(); audio = null; setPlaying(false);
+        } else {
+            if (audio) { audio.pause(); audio = null; }
+            audio = new Audio(STREAM_URL + '?nocache=' + Date.now());
+            audio.volume = 0.8;
+            audio.addEventListener('playing', function() { setPlaying(true); });
+            audio.addEventListener('pause', function() { setPlaying(false); });
+            audio.addEventListener('error', function() { console.error('Audio error:', audio.error?.code, audio.error?.message); setPlaying(false); });
+            audio.play().catch(function(e) { console.error('Play failed:', e); });
         }
-    });
-    audio.addEventListener('pause', () => {
-        isPlaying = false;
-        playBtn.classList.remove('playing'); viz.classList.remove('active'); liveBadge.classList.remove('on');
-    });
+    }
     playBtn.addEventListener('click', togglePlay);
-    audio.volume = 0.8;
 
     // === CAROUSEL ===
     const SC = 22, DUR = 7000;
@@ -601,8 +605,7 @@
         try{
             const r=await fetch(SAPI);
             const buf=await r.arrayBuffer();
-            let txt=new TextDecoder('utf-8').decode(buf);
-            if(txt.includes('\uFFFD')) txt=new TextDecoder('iso-8859-1').decode(buf);
+            const txt=new TextDecoder('iso-8859-1').decode(buf);
             const d=JSON.parse(txt);
             if(d.is_online!==false){
                 asBadge.classList.remove('offline');
